@@ -44,3 +44,32 @@ A task is overdue when:
 
 - Any authenticated user can comment on any task.
 - Comments are append-only (no editing or deletion).
+
+## Task Cloning
+
+When a task is cloned:
+- The cloned task title should be prefixed with `Copy of `.
+- The cloned task should preserve description, priority, and due_date.
+- The cloned task status MUST reset to `todo` regardless of source task status.
+- The cloned task MUST have `completed_at = null`.
+
+## Task Deferral
+
+When a task is deferred by N days:
+- If a due date exists, new due date = old due date + N days.
+- If no due date exists, new due date = current UTC time + N days.
+- `days` must be a positive integer.
+
+## Task Reassignment
+
+When a task is reassigned to another owner:
+- `owner_id` must be updated to the target user.
+- Task content should be preserved.
+- Priority MUST remain unchanged.
+
+## Bulk Cancel
+
+When bulk-cancel is requested for an owner:
+- Only tasks belonging to that owner are eligible.
+- Only open tasks (`todo`, `in_progress`) should transition to `cancelled`.
+- `done` and already `cancelled` tasks must be unchanged.

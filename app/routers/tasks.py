@@ -88,6 +88,37 @@ def escalate_priority(task_id: int, db: Session = Depends(get_db)):
     return task_service.auto_escalate_priority(db, task)
 
 
+@router.post("/{task_id}/clone", response_model=TaskResponse, status_code=201)
+def clone_task(task_id: int, db: Session = Depends(get_db)):
+    task = task_service.get_task(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task_service.clone_task(db, task, task.owner_id)
+
+
+@router.post("/{task_id}/defer", response_model=TaskResponse)
+def defer_task(task_id: int, days: int = Query(..., ge=1), db: Session = Depends(get_db)):
+    task = task_service.get_task(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task_service.defer_task_due_date(db, task, days)
+
+
+@router.post("/{task_id}/reassign", response_model=TaskResponse)
+def reassign_task(task_id: int, new_owner_id: int = Query(...), db: Session = Depends(get_db)):
+    task = task_service.get_task(db, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    _get_owner(new_owner_id, db)
+    return task_service.reassign_task_owner(db, task, new_owner_id)
+
+
+@router.post("/bulk/cancel")
+def bulk_cancel_tasks(owner_id: int = Query(...), db: Session = Depends(get_db)):
+    cancelled_count = task_service.bulk_cancel_open_tasks(db, owner_id)
+    return {"cancelled_count": cancelled_count}
+
+
 # ── Comments ───────────────────────────────────────────
 
 

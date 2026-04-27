@@ -9,6 +9,10 @@ A task management REST API built with FastAPI and SQLAlchemy.
 - **Comments** — Threaded comments on tasks
 - **Analytics** — Task completion metrics, overdue tracking, priority breakdown
 - **Priority Escalation** — Automatic escalation of overdue tasks per [business rules](docs/business-rules.md)
+- **Task Cloning** — Duplicate an existing task as a starting point for similar work
+- **Task Deferral** — Push due dates forward by a selected number of days
+- **Task Reassignment** — Transfer a task to another owner
+- **Bulk Cancel** — Cancel all open tasks for a specific owner
 
 ## Quick Start
 

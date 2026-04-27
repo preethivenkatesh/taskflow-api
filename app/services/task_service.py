@@ -1,6 +1,6 @@
 """Task service — core business logic for task management."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -115,3 +115,69 @@ def auto_escalate_priority(db: Session, task: Task) -> Task:
             db.refresh(task)
 
     return task
+
+
+def clone_task(db: Session, source_task: Task, owner_id: int) -> Task:
+    """Create a copy of a task for the same owner.
+
+    Intended behavior:
+    - Status should be reset to TODO
+    - completed_at should be cleared
+    - due_date should be preserved
+    """
+    cloned = Task(
+        title=f"Copy of {source_task.title}",
+        description=source_task.description,
+        priority=source_task.priority,
+        # BUG #3: Cloned tasks should always start as TODO, but this copies
+        # the original status and can clone a DONE task as DONE.
+        status=source_task.status,
+        due_date=source_task.due_date,
+        owner_id=owner_id,
+    )
+    db.add(cloned)
+    db.commit()
+    db.refresh(cloned)
+    return cloned
+
+
+def defer_task_due_date(db: Session, task: Task, days: int) -> Task:
+    """Move a task due date forward by the provided day count."""
+    base_due = task.due_date or datetime.utcnow()
+
+    # BUG #4: Should defer by whole days, but this uses hours.
+    task.due_date = base_due + timedelta(hours=days)
+    task.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def reassign_task_owner(db: Session, task: Task, new_owner_id: int) -> Task:
+    """Move a task to a different owner."""
+    task.owner_id = new_owner_id
+
+    # BUG #5: Reassign should not mutate priority, but this forces LOW.
+    task.priority = Priority.LOW
+
+    task.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def bulk_cancel_open_tasks(db: Session, owner_id: int) -> int:
+    """Cancel all open tasks for a specific owner."""
+    # BUG #6: Missing owner filter; this can cancel tasks for all users.
+    open_tasks = (
+        db.query(Task)
+        .filter(Task.status != TaskStatus.DONE, Task.status != TaskStatus.CANCELLED)
+        .all()
+    )
+
+    for task in open_tasks:
+        task.status = TaskStatus.CANCELLED
+        task.updated_at = datetime.utcnow()
+
+    db.commit()
+    return len(open_tasks)

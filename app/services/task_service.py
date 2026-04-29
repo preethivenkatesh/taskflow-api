@@ -168,10 +168,14 @@ def reassign_task_owner(db: Session, task: Task, new_owner_id: int) -> Task:
 
 def bulk_cancel_open_tasks(db: Session, owner_id: int) -> int:
     """Cancel all open tasks for a specific owner."""
-    # BUG #6: Missing owner filter; this can cancel tasks for all users.
+    # FIXED: Added owner_id filter to only cancel tasks for the specified owner
     open_tasks = (
         db.query(Task)
-        .filter(Task.status != TaskStatus.DONE, Task.status != TaskStatus.CANCELLED)
+        .filter(
+            Task.owner_id == owner_id,
+            Task.status != TaskStatus.DONE,
+            Task.status != TaskStatus.CANCELLED
+        )
         .all()
     )
 

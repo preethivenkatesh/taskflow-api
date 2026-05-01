@@ -157,9 +157,6 @@ def reassign_task_owner(db: Session, task: Task, new_owner_id: int) -> Task:
     """Move a task to a different owner."""
     task.owner_id = new_owner_id
 
-    # BUG #5: Reassign should not mutate priority, but this forces LOW.
-    task.priority = Priority.LOW
-
     task.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(task)

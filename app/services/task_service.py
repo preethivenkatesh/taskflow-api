@@ -95,16 +95,10 @@ def auto_escalate_priority(db: Session, task: Task) -> Task:
         if task.status in (TaskStatus.DONE, TaskStatus.CANCELLED):
             return task
 
-        # ──────────────────────────────────────────────────────────────
-        # BUG #2 (Future RAG demo): HIGH escalates to CRITICAL here,
-        # but business-rules.md says HIGH should stay HIGH.
-        # An agentic AI would need to retrieve docs/business-rules.md
-        # to understand this is wrong.
-        # ──────────────────────────────────────────────────────────────
         escalation_map = {
             Priority.LOW: Priority.MEDIUM,
             Priority.MEDIUM: Priority.HIGH,
-            Priority.HIGH: Priority.CRITICAL,  # BUG: should stay HIGH
+            # HIGH stays HIGH per business rules; CRITICAL stays CRITICAL (not in map)
         }
 
         new_priority = escalation_map.get(task.priority)

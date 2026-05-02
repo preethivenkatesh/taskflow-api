@@ -129,9 +129,9 @@ def clone_task(db: Session, source_task: Task, owner_id: int) -> Task:
         title=f"Copy of {source_task.title}",
         description=source_task.description,
         priority=source_task.priority,
-        # BUG #3: Cloned tasks should always start as TODO, but this copies
-        # the original status and can clone a DONE task as DONE.
-        status=source_task.status,
+        # Always reset status to TODO and clear completed_at for cloned tasks.
+        status=TaskStatus.TODO,
+        completed_at=None,
         due_date=source_task.due_date,
         owner_id=owner_id,
     )

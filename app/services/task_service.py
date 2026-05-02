@@ -49,12 +49,9 @@ def update_task(db: Session, task: Task, updates: TaskUpdate) -> Task:
     for field, value in update_data.items():
         setattr(task, field, value)
 
-    # ──────────────────────────────────────────────────────────────────
-    # BUG #1 (Today's demo): When a task is marked as "done", we should
-    # set completed_at = datetime.utcnow(). This line is MISSING.
-    # The status gets updated but completed_at stays None, which breaks
-    # analytics (avg completion time) and overdue detection.
-    # ──────────────────────────────────────────────────────────────────
+    # Set completed_at when a task is marked as done.
+    if task.status == TaskStatus.DONE and task.completed_at is None:
+        task.completed_at = datetime.utcnow()
 
     task.updated_at = datetime.utcnow()
     db.commit()

@@ -145,8 +145,8 @@ def defer_task_due_date(db: Session, task: Task, days: int) -> Task:
     """Move a task due date forward by the provided day count."""
     base_due = task.due_date or datetime.utcnow()
 
-    # BUG #4: Should defer by whole days, but this uses hours.
-    task.due_date = base_due + timedelta(hours=days)
+    # Defer by the specified number of whole days.
+    task.due_date = base_due + timedelta(days=days)
     task.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(task)

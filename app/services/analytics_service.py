@@ -1,53 +1,52 @@
-"""Analytics service — computes task metrics for a user."""
-
-from datetime import datetime
+"""
+Analytics Service - Tracks and reports on task statistics
+BUG: Contains multiple logic errors!
+"""
+from datetime import datetime, timedelta
 from typing import Optional
 
-from sqlalchemy.orm import Session
+class AnalyticsService:
+    def __init__(self):
+        self.task_data = []
 
-from app.models import Task, TaskStatus
-from app.schemas import TaskAnalytics
+    def calculate_average_completion_time(self, tasks):
+        """Calculate average task completion time"""
+        # BUG 1: Doesn't check for empty list
+        total_time = sum([t.get('duration', 0) for t in tasks])
+        return total_time / len(tasks)
 
+    def get_productivity_score(self, completed_tasks: int, total_tasks: int):
+        """Calculate productivity score"""
+        # BUG 2: No check for division by zero
+        score = (completed_tasks / total_tasks) * 100
+        return score
 
-def get_analytics(db: Session, owner_id: int) -> TaskAnalytics:
-    tasks = db.query(Task).filter(Task.owner_id == owner_id).all()
+    def filter_tasks_by_date(self, tasks, start_date, end_date):
+        """Filter tasks within date range"""
+        # BUG 3: Comparing string with datetime objects
+        filtered = []
+        for task in tasks:
+            task_date = task.get('created_at')
+            if start_date <= task_date <= end_date:
+                filtered.append(task)
+        return filtered
 
-    total = len(tasks)
-    completed = [t for t in tasks if t.status == TaskStatus.DONE]
-    overdue = [
-        t
-        for t in tasks
-        if t.due_date
-        and t.due_date < datetime.utcnow()
-        and t.status not in (TaskStatus.DONE, TaskStatus.CANCELLED)
-    ]
+    def get_top_performers(self, user_tasks: dict, top_n: int = 5):
+        """Get top N performing users"""
+        # BUG 4: Doesn't handle negative top_n
+        # BUG 5: Doesn't handle empty dict
+        sorted_users = sorted(user_tasks.items(), key=lambda x: x[1], reverse=True)
+        return sorted_users[:top_n]
 
-    # Average completion time depends on completed_at being set.
-    # Because of Bug #1, completed_at is always None, so this returns None.
-    completion_hours = _avg_completion_hours(completed)
+    def predict_completion_date(self, remaining_tasks: int, daily_rate: float):
+        """Predict when all tasks will be completed"""
+        # BUG 6: No handling for zero or negative daily_rate
+        days_needed = remaining_tasks / daily_rate
+        completion_date = datetime.now() + timedelta(days=days_needed)
+        return completion_date.strftime('%Y-%m-%d')
 
-    by_priority: dict[str, int] = {}
-    by_status: dict[str, int] = {}
-    for t in tasks:
-        by_priority[t.priority.value] = by_priority.get(t.priority.value, 0) + 1
-        by_status[t.status.value] = by_status.get(t.status.value, 0) + 1
-
-    return TaskAnalytics(
-        total_tasks=total,
-        completed_tasks=len(completed),
-        overdue_tasks=len(overdue),
-        avg_completion_hours=completion_hours,
-        tasks_by_priority=by_priority,
-        tasks_by_status=by_status,
-    )
-
-
-def _avg_completion_hours(completed_tasks: list[Task]) -> Optional[float]:
-    durations = []
-    for t in completed_tasks:
-        if t.completed_at and t.created_at:
-            delta = t.completed_at - t.created_at
-            durations.append(delta.total_seconds() / 3600)
-    if not durations:
-        return None
-    return round(sum(durations) / len(durations), 2)
+    def export_report(self, data: list, format: str):
+        """Export analytics report"""
+        # BUG 7: Hardcoded format, ignores format parameter
+        report = str(data)
+        return report
